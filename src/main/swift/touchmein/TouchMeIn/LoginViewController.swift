@@ -149,8 +149,135 @@ class LoginViewController: UIViewController {
           }
         }
     }
+    
+    func checkLogin(username: String, password: String ) -> Bool {
+        if password == MyKeychainWrapper.myObjectForKey("v_Data") as? String &&
+            username == NSUserDefaults.standardUserDefaults().valueForKey("username") as? String {
+                return true
+        } else {
+            return false
+        }
+    }
+    
+    
+    // MARK: - Login with 1Password
+    
+    @IBAction func canUse1Password(sender: UIButton) {
+        if NSUserDefaults.standardUserDefaults().objectForKey("has1PassLogin") != nil {
+            self.findLoginFrom1Password(self)
+        } else {
+            self.saveLoginTo1Password(self)
+        }
+    }
+    
+    @IBAction func findLoginFrom1Password(sender: AnyObject) {
+        
+        MyOnePassword.findLoginForURLString( "TouchMeIn.Login",
+            forViewController: self,
+            sender: sender,
+            completion: { (loginDict : [NSObject: AnyObject]?, error : NSError?) -> Void in
+                
+                // 1.
+                if loginDict == nil {
+                    if error!.code != Int(AppExtensionErrorCodeCancelledByUser) {
+                        print("Error invoking 1Password App Extension for find login: \(error)")
+                    }
+                    return
+                }
+                
+                // 2.
+                if NSUserDefaults.standardUserDefaults().objectForKey("username") == nil {
+                    NSUserDefaults.standardUserDefaults().setValue(loginDict![AppExtensionUsernameKey],
+                        forKey: "username")
+                    NSUserDefaults.standardUserDefaults().synchronize()
+                }
+                
+                // 3.
+                let foundUsername = loginDict!["username"] as! String
+                let foundPassword = loginDict!["password"] as! String
+                
+                if self.checkLogin(foundUsername, password: foundPassword) {
+                    
+                    self.performSegueWithIdentifier("dismissLogin", sender: self)
+                    
+                } else {
+                    
+                    let alertView = UIAlertController(title: "Error",
+                        message: "The info in 1Password is incorrect" as String, preferredStyle:.Alert)
+                    let okAction = UIAlertAction(title: "Darn!", style: .Default, handler: nil)
+                    alertView.addAction(okAction)
+                    self.presentViewController(alertView, animated: true, completion: nil)
+                }
+                
+        })
+    }
 
+    func saveLoginTo1Password(sender: AnyObject) {
+        // 1.
+        // TODO the username & pass should be unwrapped?
+        // Here we should test whether the username and passowrd are not nil.
+        // They should be equal to what's currently in the two textfields
+        // later they will be checked against the credentials in the Keychain
+        let newLoginDetails : NSDictionary = [
+            AppExtensionTitleKey: "Touch Me In",
+            AppExtensionUsernameKey: self.usernameTextField.text!,
+            AppExtensionPasswordKey: self.passwordTextField.text!,
+            AppExtensionNotesKey: "Saved with the TouchMeIn app",
+            AppExtensionSectionTitleKey: "Touch Me In app",
+        ]
+        
+        // 2.
+        let passwordGenerationOptions : NSDictionary = [
+            AppExtensionGeneratedPasswordMinLengthKey: "6",
+            AppExtensionGeneratedPasswordMaxLengthKey: "50"
+        ]
+        
+        // 3.
+        MyOnePassword.storeLoginForURLString("TouchMeIn.Login",
+            loginDetails: newLoginDetails as! [String : String],
+            passwordGenerationOptions: passwordGenerationOptions as! [String : String],
+            forViewController: self, sender: sender) { (loginDict : [NSObject : AnyObject]?,
+                error : NSError?) -> Void in
+                
+                
+                // 4.
+                if loginDict == nil {
+                    if error!.code != Int(AppExtensionErrorCodeCancelledByUser) {
+                        print("Error invoking 1Password App Extension for find login: \(error)")
+                    }
+                    return
+                }
+                
+                // 5.
+                let foundUsername = loginDict!["username"] as! String
+                let foundPassword = loginDict!["password"] as! String
+                
+                // 6.
+                if self.checkLogin(foundUsername, password: foundPassword) {
+                    
+                    self.performSegueWithIdentifier("dismissLogin", sender: self)
+                    
+                } else {
+                    
+                    // 7.
+                    let alertView = UIAlertController(title: "Error", message: "The info in 1Password is incorrect" as String, preferredStyle:.Alert)
+                    let okAction = UIAlertAction(title: "Darn!", style: .Default, handler: nil)
+                    alertView.addAction(okAction)
+                    self.presentViewController(alertView, animated: true, completion: nil)
+                    
+                }
+                
+                if NSUserDefaults.standardUserDefaults().objectForKey("username") != nil {
+                    NSUserDefaults.standardUserDefaults().setValue(self.usernameTextField.text, forKey: "username")
+                }
+                
+                NSUserDefaults.standardUserDefaults().setBool(true, forKey: "has1PassLogin")
+                NSUserDefaults.standardUserDefaults().synchronize()
+        }
+    }
+    
 
+    // MARK: - Login with TouchID
 
     @IBAction func touchIDLoginAction(sender: UIButton) {
         // 1.
@@ -215,19 +342,5 @@ class LoginViewController: UIViewController {
         }
     }
 
-    @IBAction func canUse1Password(sender: UIButton) {
-        print("one password")
-    }
-
-    func checkLogin(username: String, password: String ) -> Bool {
-        if password == MyKeychainWrapper.myObjectForKey("v_Data") as? String &&
-          username == NSUserDefaults.standardUserDefaults().valueForKey("username") as? String {
-            return true
-        } else {
-          return false
-        }
-    }
-  
-  
   
 }
