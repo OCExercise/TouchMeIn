@@ -1,0 +1,20 @@
+PODS:
+  - 1PasswordExtension (1.6.4)
+  - CocoaLumberjack (2.2.0):
+    - CocoaLumberjack/Default (= 2.2.0)
+    - CocoaLumberjack/Extensions (= 2.2.0)
+  - CocoaLumberjack/Core (2.2.0)
+  - CocoaLumberjack/Default (2.2.0):
+    - CocoaLumberjack/Core
+  - CocoaLumberjack/Extensions (2.2.0):
+    - CocoaLumberjack/Default
+
+DEPENDENCIES:
+  - 1PasswordExtension
+  - CocoaLumberjack
+
+SPEC CHECKSUMS:
+  1PasswordExtension: 9f471645d378283cb88c6d4bf502e4381a42c0ad
+  CocoaLumberjack: 17fe8581f84914d5d7e6360f7c70022b173c3ae0
+
+COCOAPODS: 0.39.0
