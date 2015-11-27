@@ -4,6 +4,9 @@ Experimenting with Swift and
 * Keychain
 * TouchID
 * 1Password
+* Project organization 
+    * Top level workspace and Podfile
+    * Javaish (src/{main,test}/yada) structure with projects as packages
 * Bridging Headers
 * Cocoapods
 * Build Settings, particularly search paths for Cocoapod dependencies
